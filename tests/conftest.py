@@ -12,6 +12,15 @@ sys.path.insert(0, os.path.join(ROOT, "src"))
 sys.path.insert(0, os.path.dirname(__file__))
 
 
+def pytest_configure(config):
+    # The daemon grants root what it denies users (no Unlock/polkit needed,
+    # may call Authenticate), so the access-control tests only mean something
+    # when run unprivileged.
+    if os.geteuid() == 0:
+        pytest.exit("run the tests as an unprivileged user, not root "
+                    "(e.g. `runuser -u <user> -- python3 -m pytest`)", returncode=2)
+
+
 def _free_port() -> int:
     with socket.socket() as s:
         s.bind(("127.0.0.1", 0))

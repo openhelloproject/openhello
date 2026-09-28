@@ -34,10 +34,17 @@ jobs:
           dnf -y install gcc cmake pkgconf pam-devel systemd-devel openssl-devel
           python3-pytest python3-gobject-base gtk4 libadwaita python3-tpm2-pytss
           python3-cryptography python3-numpy python3-opencv swtpm swtpm-tools dbus-daemon
+          util-linux
       - name: Build PAM module
         run: cmake -S pam -B pam/build && cmake --build pam/build
-      - name: Tests
-        run: python3 -m pytest tests/ -v
+      # The daemon treats root specially (no Unlock/polkit, may Authenticate),
+      # so the access-control tests must run as a normal user, like a
+      # desktop session does.
+      - name: Tests (as an unprivileged user)
+        run: |
+          useradd --create-home tester
+          chown -R tester: .
+          runuser -u tester -- python3 -m pytest tests/ -v
 
   packages:
     needs: [lint, test]
