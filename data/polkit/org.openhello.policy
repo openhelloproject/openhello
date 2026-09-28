@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE policyconfig PUBLIC "-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN"
+ "http://www.freedesktop.org/standards/PolicyKit/1/policyconfig.dtd">
+<policyconfig>
+  <vendor>OpenHello</vendor>
+  <vendor_url>https://github.com/openhelloproject/openhello</vendor_url>
+  <icon_name>org.openhello.Setup</icon_name>
+
+  <!-- Opening Biometric Sign-In settings (the app calls Unlock() at start).
+       auth_self WITHOUT "keep": polkit asks every time the app is opened,
+       like sudo. Covers enrolling, removing and choosing sign-in methods for
+       the user's own account; the unlock ends when the app closes.
+       Note: polkit authenticates through the system PAM stack, so with
+       OpenHello enabled a fingerprint/face can answer this prompt too. -->
+  <action id="org.openhello.settings">
+    <description>Open biometric sign-in settings</description>
+    <message>Authentication is required to change how you sign in</message>
+    <defaults>
+      <allow_any>no</allow_any>
+      <allow_inactive>no</allow_inactive>
+      <allow_active>auth_self</allow_active>
+    </defaults>
+  </action>
+</policyconfig>

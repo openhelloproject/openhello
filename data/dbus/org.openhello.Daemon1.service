@@ -1,0 +1,6 @@
+# D-Bus system bus activation: /usr/share/dbus-1/system-services/
+[D-BUS Service]
+Name=org.openhello.Daemon1
+Exec=/bin/false
+User=root
+SystemdService=openhellod.service

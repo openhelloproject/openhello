@@ -1,0 +1,136 @@
+<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
+ "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+<!--
+  org.openhello.Daemon1 — openhellod's public API, at /org/openhello/Daemon1
+  on the system bus.
+
+  Every method except Authenticate/GetAuthMethods acts on the *calling* user
+  (resolved from the bus connection), so no client can manage another user's
+  enrollment. All of those settings methods first need Unlock() on the same
+  connection; until then they fail with PermissionDenied.
+  Errors are org.openhello.Error.<Code>, with Code one of: NotAvailable,
+  NotImplemented, DeviceError, EnrollFailed, Duplicate, Cancelled, Busy,
+  UnknownModality, InvalidArgument, PermissionDenied, NotEnrolled.
+-->
+<node>
+  <interface name="org.openhello.Daemon1">
+
+    <!-- Daemon version, e.g. "0.3.0". -->
+    <property name="Version" type="s" access="read"/>
+
+    <!--
+      Unlock the settings API for this connection. Requires polkit action
+      org.openhello.settings (auth_self, never cached: the user authenticates
+      every time, like sudo). Stays unlocked until this connection closes.
+    -->
+    <method name="Unlock"/>
+
+    <!--
+      Modalities for the calling user: (name, available, enrolled, security_note).
+      name is "fingerprint" or "face"; security_note is honest English text
+      about spoof resistance, meant to be shown to the user.
+    -->
+    <method name="GetStatus">
+      <arg name="modalities" type="a(sbbs)" direction="out"/>
+    </method>
+
+    <!-- Fingers the calling user has enrolled in fprintd (fprintd names). -->
+    <method name="ListFingers">
+      <arg name="fingers" type="as" direction="out"/>
+    </method>
+
+    <!--
+      Start enrolling `modality` for the calling user. Needs Unlock(). Returns
+      once started; progress arrives as EnrollProgress, the outcome
+      as exactly one EnrollFinished. Both are sent only to the caller.
+      One enrollment at a time per machine (sensors are exclusive): Busy.
+      options:
+        finger (s)           fingerprint: which finger to capture
+        reuse_existing (b)   fingerprint: accept prints already in fprintd
+                             instead of capturing (default true)
+    -->
+    <method name="EnrollStart">
+      <arg name="modality" type="s" direction="in"/>
+      <arg name="options" type="a{sv}" direction="in"/>
+    </method>
+
+    <!-- Cancel the caller's running enrollment. EnrollFinished follows with
+         error "Cancelled". -->
+    <method name="EnrollCancel"/>
+
+    <!--
+      status: machine-readable, e.g. "enroll-stage-passed", "enroll-retry-scan",
+      "face-searching", "face-sample". done/total: progress (total 0 = unknown).
+      message: optional English text.
+    -->
+    <signal name="EnrollProgress">
+      <arg name="modality" type="s"/>
+      <arg name="status" type="s"/>
+      <arg name="done" type="u"/>
+      <arg name="total" type="u"/>
+      <arg name="message" type="s"/>
+    </signal>
+
+    <!-- error: "" on success, else an error Code as listed above. -->
+    <signal name="EnrollFinished">
+      <arg name="modality" type="s"/>
+      <arg name="success" type="b"/>
+      <arg name="error" type="s"/>
+      <arg name="message" type="s"/>
+    </signal>
+
+    <!-- Remove `modality` from the calling user's OpenHello sign-in. Removing
+         the last one deletes the TPM-sealed credential. fprintd's own prints
+         are left alone. Needs Unlock(). -->
+    <method name="Remove">
+      <arg name="modality" type="s" direction="in"/>
+    </method>
+
+    <!--
+      The calling user's sign-in choice. enabled: methods used at login/sudo
+      (a subset of the enrolled ones). supported: enrolled methods that can
+      sign in at all on this build (e.g. face only once liveness is ready) —
+      the ones worth offering a switch for.
+    -->
+    <method name="GetSignInMethods">
+      <arg name="enabled" type="as" direction="out"/>
+      <arg name="supported" type="as" direction="out"/>
+    </method>
+
+    <!-- Choose which enrolled methods are used for sign-in. An empty list is
+         allowed (OpenHello steps aside; password only). NotEnrolled if a
+         method isn't enrolled. Needs Unlock(). -->
+    <method name="SetSignInMethods">
+      <arg name="methods" type="as" direction="in"/>
+    </method>
+
+    <!-- For pam_openhello only (root): the methods Authenticate will run for
+         `user` right now, so PAM can prompt accurately ("scan your
+         fingerprint", "look at the camera") or skip straight to the password
+         when the list is empty. -->
+    <method name="GetAuthMethods">
+      <arg name="user" type="s" direction="in"/>
+      <arg name="methods" type="as" direction="out"/>
+    </method>
+
+    <!--
+      For pam_openhello only: root callers only (bus policy + checked again
+      in the daemon). Runs every method from GetAuthMethods at once; the
+      first live match wins. on success
+      returns an Ed25519 signature over
+        "openhello-auth-v1\0" || nonce || user || "\0" || service
+      made with a key derived from the TPM-unsealed secret. See
+      core/authtoken.py. ok=false comes with a reason, e.g. "no-match",
+      "not-enrolled", "unseal-failed", "unavailable: ...".
+    -->
+    <method name="Authenticate">
+      <arg name="user" type="s" direction="in"/>
+      <arg name="nonce" type="ay" direction="in"/>
+      <arg name="service" type="s" direction="in"/>
+      <arg name="ok" type="b" direction="out"/>
+      <arg name="signature" type="ay" direction="out"/>
+      <arg name="reason" type="s" direction="out"/>
+    </method>
+
+  </interface>
+</node>

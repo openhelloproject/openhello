@@ -1,0 +1,3 @@
+#!/bin/sh
+# /usr/libexec/openhellod — started by systemd (openhellod.service).
+exec /usr/bin/python3 -m openhello.daemon "$@"

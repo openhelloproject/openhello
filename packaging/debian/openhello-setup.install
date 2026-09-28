@@ -1,0 +1,6 @@
+usr/lib/python3/dist-packages/openhello/gui
+usr/bin/openhello-setup
+data/org.openhello.Setup.desktop usr/share/applications
+data/org.openhello.Setup.metainfo.xml usr/share/metainfo
+data/icons/hicolor/scalable/apps/org.openhello.Setup.svg usr/share/icons/hicolor/scalable/apps
+data/icons/hicolor/symbolic/apps/org.openhello.Setup-symbolic.svg usr/share/icons/hicolor/symbolic/apps

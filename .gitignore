@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.pytest_cache/
+.ruff_cache/
+
+# Build output
+/pam/build/
+/build/
+/dist/
+*.rpm
+*.deb
+*.pkg.tar.zst
+
+# Face models are fetched at packaging time (packaging/make-tarball.sh)
+*.onnx
+
+# Local tool output
+/screenshots/
+
+# Editors
+.vscode/
+.idea/
+*.swp

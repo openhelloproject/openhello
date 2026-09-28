@@ -1,0 +1,9 @@
+Name: OpenHello biometric sign-in (fingerprint and face)
+Default: no
+Priority: 260
+Conflicts: fprintd
+Auth-Type: Primary
+Auth:
+	[success=end default=ignore]	pam_openhello.so
+Auth-Initial:
+	[success=end default=ignore]	pam_openhello.so

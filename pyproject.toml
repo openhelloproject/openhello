@@ -1,0 +1,57 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "openhello"
+dynamic = ["version"]
+description = "TPM-backed unified biometric (fingerprint + IR face) authentication for Linux"
+readme = "README.md"
+license = "MIT"
+authors = [{ name = "Peneal Feleke Aragaw", email = "penealfeleke17pro@gmail.com" }]
+requires-python = ">=3.11"
+# System packages on Fedora/Debian/Arch; see packaging/. PyGObject, dbus and
+# tpm2-pytss are normally installed from the distro, not PyPI.
+dependencies = [
+    "PyGObject",
+    "tpm2-pytss",
+    "cryptography",
+    "numpy",
+]
+
+[project.urls]
+Homepage = "https://github.com/openhelloproject/openhello"
+Issues = "https://github.com/openhelloproject/openhello/issues"
+
+[project.optional-dependencies]
+face = ["opencv-python", "onnxruntime"]
+test = ["pytest"]
+
+[project.scripts]
+openhello-setup = "openhello.gui.__main__:main"
+
+[tool.setuptools.dynamic]
+version = { attr = "openhello.__version__" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"openhello.daemon" = ["*.xml"]
+"openhello.gui" = ["*.css"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "B", "UP", "I"]
+ignore = ["E402"]   # tests/tools insert sys.path before importing
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["E501"]
+"tools/*" = ["E501"]

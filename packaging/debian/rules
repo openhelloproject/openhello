@@ -1,0 +1,27 @@
+#!/usr/bin/make -f
+# Python package via pybuild, PAM module via CMake.
+export PYBUILD_NAME=openhello
+PAM_BUILD = --buildsystem=cmake --sourcedirectory=pam --builddirectory=build-pam
+
+%:
+	dh $@ --with python3 --buildsystem=pybuild
+
+override_dh_auto_configure:
+	dh_auto_configure
+	dh_auto_configure $(PAM_BUILD) -- -DOPENHELLO_BUILD_HARNESS=OFF
+
+override_dh_auto_build:
+	dh_auto_build
+	dh_auto_build $(PAM_BUILD)
+
+override_dh_auto_install:
+	dh_auto_install --destdir=debian/tmp
+	dh_auto_install $(PAM_BUILD) --destdir=debian/tmp
+
+# The test suite needs swtpm, a dbus-daemon and the built PAM harness; it runs
+# in CI, not in the package build. Just prove the daemon's modules import
+# (from the source tree: dh_auto_test runs before anything is installed).
+override_dh_auto_test:
+	PYTHONPATH=src python3 -c "\
+	import openhello.daemon.service, openhello.daemon.orchestrator, \
+	openhello.tpm.keystore, openhello.backends.fingerprint"

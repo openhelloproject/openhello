@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>org.openhello.Setup</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT</project_license>
+  <name>Biometric Sign-In</name>
+  <summary>Sign in with your fingerprint or face</summary>
+  <description>
+    <p>
+      OpenHello brings Windows Hello–style sign-in to Linux laptops: register your
+      fingerprint and (on laptops with an infrared camera) your face, then unlock the
+      screen, log in and approve sudo with a touch or a glance.
+    </p>
+    <ul>
+      <li>Biometric data never leaves your computer</li>
+      <li>The sign-in key is sealed in your computer's TPM security chip</li>
+      <li>Your password always keeps working</li>
+    </ul>
+    <p>
+      Face sign-in uses the laptop's infrared camera. Its photo check is still
+      provisional; see the project's security documentation.
+    </p>
+  </description>
+  <launchable type="desktop-id">org.openhello.Setup.desktop</launchable>
+  <developer id="io.github.openhello">
+    <name>Peneal Feleke Aragaw</name>
+  </developer>
+  <url type="homepage">https://github.com/openhelloproject/openhello</url>
+  <url type="bugtracker">https://github.com/openhelloproject/openhello/issues</url>
+  <url type="vcs-browser">https://github.com/openhelloproject/openhello</url>
+  <content_rating type="oars-1.1"/>
+  <requires>
+    <display_length compare="ge">360</display_length>
+  </requires>
+  <supports>
+    <control>pointing</control>
+    <control>keyboard</control>
+    <control>touch</control>
+  </supports>
+  <releases>
+    <release version="0.3.0" date="2026-09-28">
+      <description><p>First public release.</p></description>
+    </release>
+  </releases>
+</component>

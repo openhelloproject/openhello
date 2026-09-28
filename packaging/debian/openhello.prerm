@@ -1,0 +1,7 @@
+#!/bin/sh
+set -e
+# Never leave a PAM stack pointing at a module that's about to disappear.
+if [ "$1" = remove ]; then
+    pam-auth-update --package --remove openhello || true
+fi
+#DEBHELPER#

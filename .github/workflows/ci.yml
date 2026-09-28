@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install ruff shellcheck-py
+      - run: ruff check src tests tools
+      - run: >
+          shellcheck -s sh data/pam/openhello-pam data/openhellod tools/dev_run.sh
+          packaging/make-tarball.sh packaging/container-build.sh
+
+  test:
+    # Everything real except the biometric match: swtpm, a private dbus-daemon,
+    # the built PAM module driven through libpam. See docs/TESTING.md.
+    runs-on: ubuntu-latest
+    container: fedora:44
+    steps:
+      - uses: actions/checkout@v4
+      - name: Dependencies
+        run: >
+          dnf -y install gcc cmake pkgconf pam-devel systemd-devel openssl-devel
+          python3-pytest python3-gobject-base gtk4 libadwaita python3-tpm2-pytss
+          python3-cryptography python3-numpy python3-opencv swtpm swtpm-tools dbus-daemon
+      - name: Build PAM module
+        run: cmake -S pam -B pam/build && cmake --build pam/build
+      - name: Tests
+        run: python3 -m pytest tests/ -v
+
+  packages:
+    needs: [lint, test]
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Fedora first (2026-09-25). debian/ubuntu/arch recipes exist in
+        # packaging/ but aren't release targets yet.
+        distro: [fedora]
+    steps:
+      - uses: actions/checkout@v4
+      - run: packaging/container-build.sh ${{ matrix.distro }} dist/${{ matrix.distro }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: openhello-${{ matrix.distro }}
+          path: dist/${{ matrix.distro }}/

@@ -1,0 +1,25 @@
+/* OpenHello Setup — small additions on top of libadwaita's stylesheet. */
+
+.hero-icon {
+  color: @accent_color;
+  margin-bottom: 6px;
+}
+
+.face-glyph {
+  opacity: 0.35;
+  transition: opacity 400ms ease-out, color 400ms ease-out;
+}
+
+.face-glyph.accent {
+  opacity: 1;
+  color: @accent_color;
+}
+
+.finger-button {
+  min-width: 56px;
+  padding: 4px 8px;
+}
+
+.finger-button.enrolled {
+  color: @success_color;
+}

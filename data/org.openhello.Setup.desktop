@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=Biometric Sign-In
+GenericName=Fingerprint and Face Sign-In
+Comment=Sign in with your fingerprint or face
+Exec=openhello-setup
+Icon=org.openhello.Setup
+Terminal=false
+Categories=GTK;GNOME;Settings;Security;
+Keywords=fingerprint;face;windows hello;biometric;login;unlock;sudo;tpm;
+StartupNotify=true
+DBusActivatable=false

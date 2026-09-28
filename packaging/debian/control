@@ -1,0 +1,53 @@
+Source: openhello
+Section: admin
+Priority: optional
+Maintainer: Peneal Feleke Aragaw <penealfeleke17pro@gmail.com>
+Build-Depends: debhelper-compat (= 13),
+               dh-python,
+               pybuild-plugin-pyproject,
+               python3-all,
+               python3-setuptools,
+               cmake,
+               pkgconf,
+               libpam0g-dev,
+               libsystemd-dev,
+               libssl-dev,
+# the build-time import check (debian/rules) proves these runtime deps resolve
+               python3-gi,
+               python3-tpm2-pytss,
+               python3-cryptography,
+               python3-numpy
+Standards-Version: 4.7.0
+Rules-Requires-Root: no
+Homepage: https://github.com/openhelloproject/openhello
+
+Package: openhello
+Architecture: any
+Depends: ${python3:Depends},
+         ${shlibs:Depends},
+         ${misc:Depends},
+         python3-gi,
+         python3-tpm2-pytss,
+         python3-cryptography,
+         python3-numpy,
+         fprintd,
+         polkitd,
+         dbus
+Recommends: python3-opencv
+Suggests: python3-onnxruntime
+Description: TPM-backed fingerprint and face sign-in
+ OpenHello brings Windows Hello-style sign-in to Linux: fingerprint (via
+ fprintd) and infrared face recognition behind one D-Bus service, with the
+ sign-in credential sealed in the TPM rather than a plain pass/fail check.
+ .
+ PAM integration is opt-in: run "openhello-pam enable" as root.
+
+Package: openhello-setup
+Architecture: all
+Depends: openhello (>= ${source:Version}),
+         python3-gi,
+         gir1.2-gtk-4.0,
+         gir1.2-adw-1,
+         ${misc:Depends}
+Description: enrollment app for OpenHello biometric sign-in
+ GTK4/libadwaita app to register fingerprints and faces for OpenHello.

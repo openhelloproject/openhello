@@ -1,0 +1,100 @@
+#!/bin/sh
+# openhello-pam — turn OpenHello sign-in on or off in the system PAM stack.
+#
+#   openhello-pam status | enable | disable
+#
+# Never run automatically by packages: changing how people log in is an
+# explicit admin decision. pam_openhello is always "sufficient", so the
+# password keeps working whatever happens.
+#
+# Fedora/RHEL (authselect): creates custom/openhello from the *current*
+#   profile, with pam_fprintd.so replaced by pam_openhello.so in system-auth
+#   (sudo, su, console) and fingerprint-auth (GDM login/unlock). Remote
+#   logins (password-auth: sshd) are untouched. The previous selection is
+#   saved and restored by `disable`.
+# Debian/Ubuntu (pam-auth-update): toggles /usr/share/pam-configs/openhello.
+# Anything else: prints what to add, and where.
+set -eu
+
+STATE_DIR=/var/lib/openhello
+SAVED="$STATE_DIR/pam-previous-authselect"
+PROFILE=openhello
+
+die() { echo "openhello-pam: $*" >&2; exit 1; }
+need_root() { [ "$(id -u)" -eq 0 ] || die "must be run as root"; }
+
+backend() {
+    if command -v authselect >/dev/null 2>&1 && authselect current >/dev/null 2>&1; then
+        echo authselect
+    elif command -v pam-auth-update >/dev/null 2>&1; then
+        echo pam-auth-update
+    else
+        echo manual
+    fi
+}
+
+# -- authselect ----------------------------------------------------------------
+as_enabled() { authselect current --raw 2>/dev/null | grep -q "^custom/$PROFILE\( \|$\)"; }
+
+as_enable() {
+    as_enabled && { echo "already enabled"; return; }
+    current=$(authselect current --raw)
+    base=${current%% *}
+    features=$(echo "$current" | cut -s -d' ' -f2-)
+    case $base in custom/*) die "current profile $base is custom; add pam_openhello.so to it by hand" ;; esac
+
+    mkdir -p "$STATE_DIR"
+    printf '%s\n' "$current" > "$SAVED"
+
+    rm -rf "/etc/authselect/custom/$PROFILE"
+    authselect create-profile "$PROFILE" --base-on="$base" \
+        --symlink-meta --symlink-nsswitch --symlink-dconf >/dev/null
+    dir="/etc/authselect/custom/$PROFILE"
+    for f in system-auth fingerprint-auth; do
+        grep -q 'pam_fprintd\.so' "$dir/$f" || die "$base/$f has no pam_fprintd line to replace"
+        sed -i 's/pam_fprintd\.so/pam_openhello.so/' "$dir/$f"
+    done
+
+    case " $features " in *" with-fingerprint "*) ;; *) features="$features with-fingerprint" ;; esac
+    # shellcheck disable=SC2086  # features is a word list on purpose
+    authselect select "custom/$PROFILE" $features --force --backup="openhello-$(date +%Y%m%d%H%M%S)" >/dev/null
+    echo "enabled (previous selection saved: $current)"
+}
+
+as_disable() {
+    as_enabled || { echo "not enabled"; return; }
+    [ -f "$SAVED" ] || die "no saved previous selection in $SAVED; use 'authselect backup-list'"
+    # shellcheck disable=SC2046
+    authselect select $(cat "$SAVED") --force >/dev/null
+    rm -f "$SAVED"
+    echo "disabled (restored: $(authselect current --raw))"
+}
+
+# -- pam-auth-update -------------------------------------------------------------
+pau_enabled() { grep -q 'pam_openhello\.so' /etc/pam.d/common-auth 2>/dev/null; }
+
+# -- main ------------------------------------------------------------------------
+cmd=${1:-status}
+b=$(backend)
+case "$cmd:$b" in
+    status:authselect)      as_enabled && echo enabled || echo disabled ;;
+    status:pam-auth-update) pau_enabled && echo enabled || echo disabled ;;
+    enable:authselect)      need_root; as_enable ;;
+    disable:authselect)     need_root; as_disable ;;
+    enable:pam-auth-update) need_root; pam-auth-update --enable openhello; echo enabled ;;
+    disable:pam-auth-update) need_root; pam-auth-update --disable openhello; echo disabled ;;
+    status:manual)
+        grep -rqs 'pam_openhello\.so' /etc/pam.d && echo enabled || echo disabled ;;
+    enable:manual|disable:manual)
+        cat <<'MSG'
+No PAM configuration tool (authselect / pam-auth-update) found.
+Add this line to /etc/pam.d/system-auth (Arch: before "auth [success=1 default=bad] pam_unix.so";
+other distros: before the first pam_unix.so auth line), and remove pam_fprintd.so if present:
+
+    auth    sufficient    pam_openhello.so
+
+Keep it "sufficient" — never "required" — so your password always works.
+MSG
+        exit 2 ;;
+    *) die "usage: openhello-pam status|enable|disable" ;;
+esac

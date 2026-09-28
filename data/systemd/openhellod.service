@@ -1,0 +1,42 @@
+[Unit]
+Description=OpenHello biometric authentication daemon
+Documentation=https://github.com/openhelloproject/openhello
+# Started on demand by D-Bus activation (GUI or pam_openhello).
+
+[Service]
+Type=dbus
+BusName=org.openhello.Daemon1
+ExecStart=/usr/libexec/openhellod
+Restart=on-failure
+
+# Runs as root: it must read root-only enrollment state, reach the TPM and
+# cameras, and claim fprintd for any user. A dedicated user is future work
+# (see docs/SECURITY.md). Everything else is locked down.
+StateDirectory=openhello
+StateDirectoryMode=0700
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateNetwork=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+ProtectHostname=yes
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=no
+RestrictAddressFamilies=AF_UNIX
+SystemCallArchitectures=native
+CapabilityBoundingSet=CAP_DAC_OVERRIDE CAP_CHOWN CAP_FOWNER
+DevicePolicy=closed
+DeviceAllow=/dev/tpmrm0 rw
+DeviceAllow=char-video4linux rw
+UMask=0077
+
+[Install]
+# No [Install] target needed: activated via D-Bus.

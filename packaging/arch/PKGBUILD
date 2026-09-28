@@ -1,0 +1,70 @@
+# Maintainer: Peneal Feleke Aragaw <penealfeleke17pro@gmail.com>
+pkgbase=openhello
+pkgname=(openhello openhello-setup)
+pkgver=0.3.0
+pkgrel=1
+pkgdesc="TPM-backed fingerprint and face sign-in for Linux"
+arch=(x86_64 aarch64)
+url="https://github.com/openhelloproject/openhello"
+license=(MIT Apache-2.0)   # Apache-2.0: the bundled SFace model
+makedepends=(cmake python-build python-installer python-setuptools python-wheel)
+source=("$pkgbase-$pkgver.tar.gz")
+sha256sums=(SKIP)
+
+build() {
+  cd "$pkgbase-$pkgver"
+  python -m build --wheel --no-isolation
+  cmake -S pam -B build-pam -DCMAKE_BUILD_TYPE=None -DCMAKE_INSTALL_PREFIX=/usr \
+        -DPAM_MODULE_DIR=/usr/lib/security -DOPENHELLO_BUILD_HARNESS=OFF
+  cmake --build build-pam
+}
+
+check() {
+  cd "$pkgbase-$pkgver"
+  PYTHONPATH=src python -c "import openhello.daemon.orchestrator, openhello.core.authtoken"
+}
+
+package_openhello() {
+  pkgdesc="TPM-backed fingerprint and face sign-in for Linux (daemon + PAM module)"
+  depends=(python python-gobject python-tpm2-pytss python-cryptography python-numpy
+           fprintd polkit dbus pam systemd-libs openssl)
+  optdepends=('python-opencv: IR face sign-in'
+              'python-onnxruntime: ArcFace face model')
+  cd "$pkgbase-$pkgver"
+  python -m installer --destdir="$pkgdir" dist/*.whl
+  local site; site=$(python -c "import site; print(site.getsitepackages()[0])")
+  rm -r "$pkgdir$site/openhello/gui" "$pkgdir/usr/bin/openhello-setup"
+  rmdir "$pkgdir/usr/bin" 2>/dev/null || true
+  DESTDIR="$pkgdir" cmake --install build-pam
+  install -Dm755 data/openhellod                        "$pkgdir/usr/lib/openhello/openhellod"
+  install -Dm755 data/pam/openhello-pam                 "$pkgdir/usr/bin/openhello-pam"
+  install -Dm644 data/systemd/openhellod.service        "$pkgdir/usr/lib/systemd/system/openhellod.service"
+  sed -i 's|/usr/libexec/openhellod|/usr/lib/openhello/openhellod|' "$pkgdir/usr/lib/systemd/system/openhellod.service"
+  install -Dm644 data/dbus/org.openhello.Daemon1.conf   "$pkgdir/usr/share/dbus-1/system.d/org.openhello.Daemon1.conf"
+  install -Dm644 data/dbus/org.openhello.Daemon1.service "$pkgdir/usr/share/dbus-1/system-services/org.openhello.Daemon1.service"
+  install -Dm644 src/openhello/daemon/org.openhello.Daemon1.xml "$pkgdir/usr/share/dbus-1/interfaces/org.openhello.Daemon1.xml"
+  install -Dm644 data/polkit/org.openhello.policy       "$pkgdir/usr/share/polkit-1/actions/org.openhello.policy"
+  install -Dm644 -t "$pkgdir/usr/share/openhello/models" models/*.onnx models/LICENSES.md
+  install -dm700 "$pkgdir/var/lib/openhello"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
+package_openhello-setup() {
+  pkgdesc="Enrollment app for OpenHello biometric sign-in"
+  depends=(openhello python-gobject gtk4 libadwaita)
+  cd "$pkgbase-$pkgver"
+  local site; site=$(python -c "import site; print(site.getsitepackages()[0])")
+  install -d "$pkgdir$site/openhello"
+  cp -r src/openhello/gui "$pkgdir$site/openhello/gui"
+  find "$pkgdir" -name __pycache__ -prune -exec rm -rf {} +
+  python -m compileall -q -d "$site" "$pkgdir$site/openhello/gui"
+  install -Dm755 /dev/stdin "$pkgdir/usr/bin/openhello-setup" <<'SH'
+#!/bin/sh
+exec /usr/bin/python3 -m openhello.gui "$@"
+SH
+  install -Dm644 data/org.openhello.Setup.desktop       "$pkgdir/usr/share/applications/org.openhello.Setup.desktop"
+  install -Dm644 data/org.openhello.Setup.metainfo.xml  "$pkgdir/usr/share/metainfo/org.openhello.Setup.metainfo.xml"
+  install -Dm644 data/icons/hicolor/scalable/apps/org.openhello.Setup.svg "$pkgdir/usr/share/icons/hicolor/scalable/apps/org.openhello.Setup.svg"
+  install -Dm644 data/icons/hicolor/symbolic/apps/org.openhello.Setup-symbolic.svg "$pkgdir/usr/share/icons/hicolor/symbolic/apps/org.openhello.Setup-symbolic.svg"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}

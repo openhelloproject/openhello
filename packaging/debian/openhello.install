@@ -1,0 +1,18 @@
+usr/lib/python3/dist-packages/openhello/__init__.py
+usr/lib/python3/dist-packages/openhello/core
+usr/lib/python3/dist-packages/openhello/daemon
+usr/lib/python3/dist-packages/openhello/backends
+usr/lib/python3/dist-packages/openhello/tpm
+usr/lib/python3/dist-packages/openhello-*.dist-info
+usr/lib/*/security/pam_openhello.so
+data/openhellod usr/libexec
+data/pam/openhello-pam usr/sbin
+data/systemd/openhellod.service usr/lib/systemd/system
+data/dbus/org.openhello.Daemon1.conf usr/share/dbus-1/system.d
+data/dbus/org.openhello.Daemon1.service usr/share/dbus-1/system-services
+src/openhello/daemon/org.openhello.Daemon1.xml usr/share/dbus-1/interfaces
+data/polkit/org.openhello.policy usr/share/polkit-1/actions
+data/pam/pam-configs-openhello usr/share/pam-configs
+models/face_detection_yunet_2023mar.onnx usr/share/openhello/models
+models/face_recognition_sface_2021dec.onnx usr/share/openhello/models
+models/LICENSES.md usr/share/openhello/models
