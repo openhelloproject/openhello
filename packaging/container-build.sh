@@ -1,6 +1,7 @@
 #!/bin/sh
 # Build distro packages in a throwaway container (needs docker or podman):
 #   packaging/container-build.sh fedora|debian|ubuntu|arch [OUT_DIR]
+# FEDORA_RELEASE picks the Fedora image (default 44), e.g. FEDORA_RELEASE=43.
 # Nothing is installed on the host. Packages land in OUT_DIR (default dist/<distro>).
 set -eu
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
@@ -21,7 +22,7 @@ VERSION=$(sed -n 's/^__version__ = "\([0-9.]*\)"/\1/p' "$ROOT/src/openhello/__in
 # shellcheck disable=SC2016
 case $DISTRO in
 fedora)
-    IMAGE=fedora:44
+    IMAGE=fedora:${FEDORA_RELEASE:-44}
     SCRIPT='
       dnf -y install rpm-build dnf-plugins-core
       mkdir -p ~/rpmbuild/SOURCES && cp /work/*.tar.gz ~/rpmbuild/SOURCES/

@@ -1,6 +1,6 @@
 Name:           openhello
 Version:        0.3.0
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        TPM-backed fingerprint and face sign-in for Linux
 
 # MIT: OpenHello and the YuNet model; Apache-2.0: the SFace model
@@ -31,9 +31,11 @@ Requires:       python3-numpy
 Requires:       fprintd
 Requires:       polkit
 Requires:       dbus
-# IR face sign-in; without them only fingerprint is offered.
+# IR face sign-in; without it only fingerprint is offered.
 Recommends:     python3-opencv
-Recommends:     python3-onnxruntime
+# Only for the optional ArcFace model (not shipped). Not a Recommends: it
+# requires python3-sympy, which recommends TeX Live (~900 packages).
+Suggests:       python3-onnxruntime
 
 %description
 OpenHello brings Windows Hello–style sign-in to Linux: fingerprint (via
@@ -125,5 +127,10 @@ fi
 %{_datadir}/icons/hicolor/symbolic/apps/org.openhello.Setup-symbolic.svg
 
 %changelog
+* Mon Oct 05 2026 Peneal Feleke Aragaw <penealfeleke17pro@gmail.com> - 0.3.0-2
+- Suggest instead of recommend python3-onnxruntime (only for the optional
+  ArcFace model); it pulled in TeX Live through python3-sympy
+- Build for Fedora 43
+
 * Mon Sep 28 2026 Peneal Feleke Aragaw <penealfeleke17pro@gmail.com> - 0.3.0-1
 - First public release

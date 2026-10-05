@@ -36,9 +36,10 @@ packaging/container-build.sh fedora dist/fedora
 
 The repository builds on COPR through `.copr/Makefile`:
 
-1. Create the project at <https://copr.fedorainfracloud.org> (project
-   `openhello`), with the Fedora releases to build for and "Enable internet
-   access during builds" off.
+1. The project is <https://copr.fedorainfracloud.org/coprs/penealfa/openhello/>
+   (chroots `fedora-43-x86_64`, `fedora-44-x86_64` and `fedora-rawhide-x86_64`, "Follow Fedora
+   branching" on, "Enable internet access during builds" off, AppStream
+   metadata on).
 2. Add a package: source type **SCM**, clone URL
    `https://github.com/openhelloproject/openhello`, spec
    `packaging/fedora/openhello.spec`, SRPM build method **make srpm**.
@@ -47,7 +48,7 @@ The repository builds on COPR through `.copr/Makefile`:
 Users then install with:
 
 ```bash
-sudo dnf copr enable <owner>/openhello     # <owner>: your COPR user, or @group
+sudo dnf copr enable penealfa/openhello
 sudo dnf install openhello-setup
 ```
 

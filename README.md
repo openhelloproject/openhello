@@ -31,15 +31,30 @@ Fedora is the first supported distribution.
 
 ## Install (Fedora)
 
-Packages will be published on [COPR](https://copr.fedorainfracloud.org), so
-installing becomes `sudo dnf copr enable <owner>/openhello` followed by
-`sudo dnf install openhello-setup`. Until then, build the RPMs from this
-repository:
+```bash
+sudo dnf copr enable penealfa/openhello
+sudo dnf install openhello-setup
+```
+
+Packages are built on [COPR](https://copr.fedorainfracloud.org/coprs/penealfa/openhello/)
+for Fedora 43, 44 and Rawhide. dnf pulls in everything else (fprintd, TPM
+libraries, OpenCV, the face models).
+
+### Fedora Atomic (Silverblue, Kinoite)
+
+`dnf copr` isn't available on atomic desktops, so add the repository file
+and layer the package with rpm-ostree, then reboot:
 
 ```bash
-packaging/container-build.sh fedora dist/fedora     # needs podman or docker
-sudo dnf install dist/fedora/openhello-0*.rpm dist/fedora/openhello-setup-0*.rpm
+release=$(rpm -E %fedora)
+curl -fsSL "https://copr.fedorainfracloud.org/coprs/penealfa/openhello/repo/fedora-$release/penealfa-openhello-fedora-$release.repo" \
+  | sudo tee /etc/yum.repos.d/penealfa-openhello.repo
+rpm-ostree install openhello-setup
+systemctl reboot
 ```
+
+After the reboot, continue with the steps below. Atomic desktops haven't
+been tested yet; reports are welcome.
 
 Then open **Biometric Sign-In**, set up your fingerprint and/or face, and
 turn OpenHello on for login and sudo:
